@@ -600,9 +600,9 @@ export function useApp(propsIn: Partial<AppProps> = {}) {
     strats, hasStrats: !emptyState, noStrats: emptyState,
     activeCount: strats.filter(t => t.isActive).length,
     aggStats: [
-      { label: 'Total strategies', value: String(strats.length), neutral: true, pos: false },
       { label: 'Combined P&L today', value: '+₹6,412', neutral: false, pos: true },
       { label: 'Trades this week', value: '31', neutral: true, pos: false },
+      { label: 'Win rate this week', value: '61%', neutral: true, pos: false },
     ].map(s => ({
       ...s, ghost,
       ghostChar: String(s.value).replace(/[^0-9]/g, '').charAt(0) || '0',
