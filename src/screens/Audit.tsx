@@ -1,10 +1,15 @@
 import { C, F, NEG, POS, shadowSm } from '../lib/theme'
+import { useMediaQuery } from '../lib/useMediaQuery'
 import { HoverBtn, HoverDiv } from '../components/Hoverable'
 import type { App } from '../state/useApp'
 
-const GRID = '132px 96px minmax(0,1.2fr) 104px 62px minmax(0,1fr) 116px'
+const GRID = '124px 92px minmax(0,1.25fr) 100px 56px minmax(0,1.05fr) 116px'
 
 export function Audit({ app }: { app: App }) {
+  // Below this the sidebar would squeeze the table into a horizontal scroll,
+  // so the filters move above it and the table takes the full width.
+  const narrow = useMediaQuery('(max-width: 1100px)')
+
   return (
     <div style={{ maxWidth: 1180, margin: '0 auto' }}>
       {app.auditEmpty && <EmptyState app={app} />}
@@ -13,12 +18,14 @@ export function Audit({ app }: { app: App }) {
           <Header app={app} />
           <div
             style={{
-              display: 'grid', gridTemplateColumns: '270px minmax(0,1fr)',
+              display: 'grid',
+              gridTemplateColumns: narrow ? 'minmax(0,1fr)' : '270px minmax(0,1fr)',
               gap: 22, alignItems: 'start',
             }}
           >
-            <Filters app={app} />
+            <Filters app={app} narrow={narrow} />
             <div style={{ minWidth: 0 }}>
+              <Toolbar app={app} />
               {app.isList && <ListView app={app} />}
               {app.isGrid && <GridView app={app} />}
             </div>
@@ -87,62 +94,111 @@ function EmptyState({ app }: { app: App }) {
 
 function Header({ app }: { app: App }) {
   return (
-    <div style={{ position: 'relative', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0, font: `700 66px/.95 ${F.display}`, letterSpacing: '-.045em' }}>
+    <div
+      style={{
+        display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end',
+        justifyContent: 'space-between', gap: 24,
+      }}
+    >
+      <div>
+        <h1 style={{ margin: 0, font: `700 62px/.98 ${F.display}`, letterSpacing: '-.045em' }}>
           Audit Log
         </h1>
-        <span
+        <div
           style={{
-            marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 9,
-            padding: '9px 16px', borderRadius: 999, background: C.ink, color: C.inkInv,
-            font: `700 11px/1 ${F.body}`, letterSpacing: '.11em', textTransform: 'uppercase',
+            marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+            font: `500 12.5px/1.5 ${F.body}`, color: C.muted,
           }}
         >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.lime }} />
-          <span>{app.totalRecords}&nbsp;records</span>
-        </span>
-        <div style={{ flex: 1 }} />
-        <HoverBtn
-          onClick={app.exportCsv}
-          hover={{ background: '#fff', borderColor: 'rgba(20,20,15,.4)' }}
-          style={{
-            marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 11,
-            padding: '16px 26px', borderRadius: 999, border: `1px solid ${C.line4}`,
-            background: C.surface, cursor: 'pointer', font: `700 11px/1 ${F.body}`,
-            letterSpacing: '.13em', textTransform: 'uppercase', color: C.ink,
-          }}
-        >
-          <svg width="12" height="13" viewBox="0 0 12 13">
-            <path d="M6 1v8" stroke={C.ink} strokeWidth="1.5" fill="none" />
-            <path d="M2.5 6L6 9.5 9.5 6" stroke={C.ink} strokeWidth="1.5" fill="none" />
-            <rect x="1" y="11" width="10" height="1.5" fill={C.ink} />
-          </svg>
-          {app.exportLabel}
-        </HoverBtn>
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 13px',
+              borderRadius: 999, background: C.ink, color: C.inkInv,
+              font: `700 10px/1 ${F.body}`, letterSpacing: '.12em', textTransform: 'uppercase',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.lime }} />
+            {app.totalRecords} records
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <svg width="11" height="13" viewBox="0 0 11 13" aria-hidden>
+              <rect
+                x="1" y="5" width="9" height="7.2" rx="1.6"
+                fill="none" stroke="#8b877c" strokeWidth="1.3"
+              />
+              <path
+                d="M3.2 5V3.4a2.3 2.3 0 0 1 4.6 0V5"
+                fill="none" stroke="#8b877c" strokeWidth="1.3"
+              />
+            </svg>
+            Append-only — records cannot be edited or deleted, by you or by us.
+          </span>
+        </div>
       </div>
-      <p
+
+      <HoverBtn
+        onClick={app.exportCsv}
+        hover={{ background: '#fff', borderColor: 'rgba(20,20,15,.4)' }}
         style={{
-          margin: '22px 0 0', maxWidth: 660, font: `400 19px/1.65 ${F.display}`,
-          letterSpacing: '-.01em', color: C.soft, textWrap: 'pretty',
+          display: 'inline-flex', alignItems: 'center', gap: 11,
+          padding: '16px 26px', borderRadius: 999, border: `1px solid ${C.line4}`,
+          background: C.surface, cursor: 'pointer', font: `700 11px/1 ${F.body}`,
+          letterSpacing: '.13em', textTransform: 'uppercase', color: C.ink,
         }}
       >
-        <span style={{ font: `700 1em/1 ${F.display}`, color: C.ink }}>
-          Every signal is permanently logged
-        </span>{' '}
-        — executed or rejected, by you or by the risk engine. Records are append-only: nothing here
-        can be edited or deleted, by anyone, including us.
-      </p>
+        <svg width="12" height="13" viewBox="0 0 12 13" aria-hidden>
+          <path d="M6 1v8" stroke={C.ink} strokeWidth="1.5" fill="none" />
+          <path d="M2.5 6L6 9.5 9.5 6" stroke={C.ink} strokeWidth="1.5" fill="none" />
+          <rect x="1" y="11" width="10" height="1.5" fill={C.ink} />
+        </svg>
+        {app.exportLabel}
+      </HoverBtn>
     </div>
   )
 }
 
-function Filters({ app }: { app: App }) {
+/** Record count and view controls, sitting directly above the table. */
+function Toolbar({ app }: { app: App }) {
+  return (
+    <div
+      style={{
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center',
+        justifyContent: 'space-between', gap: 16, marginBottom: 14,
+      }}
+    >
+      <div style={{ font: `500 12.5px/1 ${F.body}`, color: '#8b877c' }}>
+        Showing <span style={{ font: `700 1em/1 ${F.body}`, color: C.ink }}>{app.shownCount}</span>{' '}
+        of {app.totalRecords} records
+      </div>
+      <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 12, background: C.hover }}>
+        {app.densityOpts.map(d => (
+          <button
+            key={d.label}
+            type="button"
+            onClick={d.pick}
+            style={{
+              border: 'none', cursor: 'pointer', padding: '9px 18px', borderRadius: 9,
+              background: d.on ? C.ink : 'transparent',
+              color: d.on ? C.inkInv : '#8b877c',
+              font: `${d.on ? 700 : 600} 10px/1 ${F.body}`,
+              letterSpacing: '.11em', textTransform: 'uppercase',
+            }}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Filters({ app, narrow }: { app: App; narrow: boolean }) {
   return (
     <aside
       style={{
         background: C.surface, border: '1px solid rgba(20,20,15,.08)', borderRadius: 22,
-        padding: 24, position: 'sticky', top: 22, boxShadow: shadowSm,
+        padding: 24, boxShadow: shadowSm,
+        ...(narrow ? null : { position: 'sticky' as const, top: 22 }),
       }}
     >
       <div
@@ -172,12 +228,21 @@ function Filters({ app }: { app: App }) {
         </HoverBtn>
       </div>
 
-      {app.filterGroups.map(g => (
+      <div
+        style={
+          narrow
+            ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 24 }
+            : undefined
+        }
+      >
+      {app.filterGroups.map((g, i) => (
         <div
           key={g.label}
-          style={{
-            paddingBottom: 20, marginBottom: 20, borderBottom: `1px solid ${C.line2}`,
-          }}
+          style={
+            narrow || i === app.filterGroups.length - 1
+              ? undefined
+              : { paddingBottom: 20, marginBottom: 20, borderBottom: `1px solid ${C.line2}` }
+          }
         >
           <div
             style={{
@@ -207,44 +272,6 @@ function Filters({ app }: { app: App }) {
           </div>
         </div>
       ))}
-
-      <div>
-        <div
-          style={{
-            font: `600 11px/1 ${F.body}`, letterSpacing: '.1em',
-            textTransform: 'uppercase', color: C.muted, marginBottom: 12,
-          }}
-        >
-          Display
-        </div>
-        <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 12, background: C.hover }}>
-          {app.densityOpts.map(d => (
-            <button
-              key={d.label}
-              type="button"
-              onClick={d.pick}
-              style={{
-                flex: 1, border: 'none', cursor: 'pointer', padding: '9px 12px', borderRadius: 9,
-                background: d.on ? C.ink : 'transparent',
-                color: d.on ? C.inkInv : '#8b877c',
-                font: `${d.on ? 700 : 600} 10px/1 ${F.body}`,
-                letterSpacing: '.11em', textTransform: 'uppercase',
-              }}
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
-          marginTop: 22, paddingTop: 20, borderTop: `1px solid ${C.line2}`,
-          font: `500 12px/1.6 ${F.body}`, color: '#8b877c',
-        }}
-      >
-        Showing <span style={{ font: `700 1em/1 ${F.body}`, color: C.ink }}>{app.shownCount}</span>{' '}
-        of {app.totalRecords} records.
       </div>
     </aside>
   )
@@ -273,17 +300,19 @@ function ListView({ app }: { app: App }) {
   return (
     <div
       style={{
+        // Rows flow with the page: an inner scroller clipped the last row and
+        // hid the footer, and a table nested in a scrolling page reads badly.
         background: C.surface, border: `1px solid ${C.line3}`, borderRadius: 16,
-        maxHeight: 660, overflow: 'auto', boxShadow: shadowSm,
+        overflowX: 'auto', boxShadow: shadowSm,
       }}
     >
-      <div style={{ minWidth: 860 }}>
+      <div style={{ minWidth: 800 }}>
         <div
           style={{
-            position: 'sticky', top: 0, zIndex: 2, display: 'grid',
-            gridTemplateColumns: GRID, gap: 14, padding: '11px 22px 9px',
+            display: 'grid',
+            gridTemplateColumns: GRID, gap: 14, padding: '12px 22px 10px',
             background: '#f4f2ec', borderBottom: `1.5px solid ${C.line5}`,
-            boxShadow: '0 1px 0 rgba(20,20,15,.04)',
+            borderTopLeftRadius: 15, borderTopRightRadius: 15,
           }}
         >
           {app.cols.map(h => (
@@ -421,6 +450,7 @@ function ListView({ app }: { app: App }) {
               display: 'flex', flexWrap: 'wrap', alignItems: 'center',
               justifyContent: 'space-between', gap: 12, padding: '11px 22px',
               background: '#f4f2ec', borderTop: '1.5px solid rgba(20,20,15,.14)',
+              borderBottomLeftRadius: 15, borderBottomRightRadius: 15,
               font: `600 9.5px/1.4 ${F.body}`, letterSpacing: '.13em',
               textTransform: 'uppercase', color: '#8b877c',
             }}
@@ -491,7 +521,15 @@ function GridView({ app }: { app: App }) {
                 {r.executed ? 'Executed' : 'Rejected'}
               </span>
             </div>
-            <div style={{ font: `700 30px/1 ${F.display}`, letterSpacing: '-.035em' }}>{r.qty}</div>
+            <div
+              style={{
+                font: `700 30px/1 ${F.display}`, letterSpacing: '-.035em',
+                // A rejected record has no quantity; don't let the placeholder shout.
+                color: r.executed ? C.ink : C.faint,
+              }}
+            >
+              {r.qty}
+            </div>
             <div
               style={{
                 marginTop: 8, font: `600 10px/1 ${F.body}`, letterSpacing: '.13em',

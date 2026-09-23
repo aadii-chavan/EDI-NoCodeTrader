@@ -22,7 +22,7 @@ npm run lint
 | Strategies overview | `src/screens/Strategies.tsx` |
 | Strategy Builder | `src/screens/Builder.tsx` |
 | Live Monitor | `src/screens/Monitor.tsx` — tabbed, one tab per running strategy |
-| Audit Log | `src/screens/Audit.tsx` |
+| Audit Log | `src/screens/Audit.tsx` — rows flow with the page; filters collapse above the table below 1100px |
 | Account & Settings | `src/screens/Settings.tsx` |
 | Sign up / Log in | `src/screens/Auth.tsx` |
 | Broker onboarding | `src/screens/BrokerFlow.tsx` |
