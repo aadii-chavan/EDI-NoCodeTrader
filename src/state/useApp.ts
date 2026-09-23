@@ -3,6 +3,7 @@ import {
   AUDIT, CMPS, COMPARE, DAYS, FEED_LENGTH, METRICS, NOTIFS, STRATS, SYMS, feedFor,
 } from '../data/mock'
 import { inr, priceOf, rng } from '../lib/format'
+import { clearSession, loadSession, saveSession } from '../lib/session'
 import { makeBacktest } from './backtest'
 import type { AppProps, AppState, Cond, Pill, Screen } from './types'
 
@@ -46,7 +47,7 @@ const INITIAL: AppState = {
   brokerStep: 'select', brokerPick: null, brokerName: 'Zerodha',
   oClient: '', oPw: '', oTotp: '',
   suName: '', suEmail: '', suPw: '', suPw2: '',
-  liEmail: 'ananya.rao@email.com', liPw: '',
+  liEmail: '', liPw: '',
   profileName: 'Ananya Rao', profileEmail: 'ananya.rao@email.com',
   notifOpen: false, readAll: false,
   connLost: null,
@@ -72,6 +73,9 @@ type Patch = Partial<AppState> | ((s: AppState) => Partial<AppState>)
 
 export function useApp(propsIn: Partial<AppProps> = {}) {
   const props = { ...DEFAULT_PROPS, ...propsIn }
+  // Read once per mount: a saved session decides whether a visitor who hasn't
+  // asked for a specific stage lands on the marketing page or straight in.
+  const [restored] = useState(loadSession)
   const [S, setRaw] = useState<AppState>(INITIAL)
   // Captured once at mount; render derives every timestamp from this + `tick`,
   // so rendering never reads the wall clock.
@@ -504,7 +508,9 @@ export function useApp(propsIn: Partial<AppProps> = {}) {
           ? 'Fair. Add a symbol to reach Strong.'
           : 'Add length and a number to strengthen it.'
 
-  const stage = S.stage || props.startStage || 'app'
+  // An explicit ?stage= always wins, so the landing page stays reachable while
+  // signed in; otherwise the saved session decides.
+  const stage = S.stage ?? propsIn.startStage ?? (restored ? 'app' : 'landing')
   const inApp = stage === 'app'
   const connDown = S.connLost === null ? props.connectionLost === true : S.connLost
   const initials = (S.profileName || 'NT')
@@ -549,6 +555,7 @@ export function useApp(propsIn: Partial<AppProps> = {}) {
       set({ screen: 'monitor', monitorId: BUILDER_ID, openRow: null, notifOpen: false }),
     ghost,
 
+    isLanding: stage === 'landing',
     isAuth: stage === 'signup' || stage === 'login',
     isSignup: stage === 'signup',
     isLogin: stage === 'login',
@@ -572,14 +579,28 @@ export function useApp(propsIn: Partial<AppProps> = {}) {
     pwLabel, pwHint,
     pwMismatch: S.suPw2.length > 0 && S.suPw2 !== S.suPw,
     submitSignup: () =>
-      set(s => ({
-        stage: 'broker', brokerStep: 'select',
-        profileName: s.suName || s.profileName,
-        profileEmail: s.suEmail || s.profileEmail,
-      })),
+      set(s => {
+        const valid =
+          s.suEmail.trim().length > 0 &&
+          s.suPw.length > 0 &&
+          !(s.suPw2.length > 0 && s.suPw2 !== s.suPw)
+        if (!valid) return {}
+        const name = s.suName.trim() || s.profileName
+        const email = s.suEmail.trim() || s.profileEmail
+        saveSession({ name, email })
+        // New accounts still have to connect a broker — step 2 of 2 by design.
+        return { stage: 'broker', brokerStep: 'select', profileName: name, profileEmail: email }
+      }),
     goLogin: () => set({ stage: 'login' }),
     goSignup: () => set({ stage: 'signup' }),
-    submitLogin: () => set({ stage: 'broker', brokerStep: 'select' }),
+    submitLogin: () =>
+      set(s => {
+        if (!s.liEmail.trim() || !s.liPw) return {}
+        const email = s.liEmail.trim() || s.profileEmail
+        saveSession({ name: s.profileName, email })
+        // Returning users already connected a broker, so go straight to the app.
+        return { stage: 'app', screen: 'strategies', profileEmail: email }
+      }),
 
     /* broker connect */
     brokers: [
@@ -626,7 +647,10 @@ export function useApp(propsIn: Partial<AppProps> = {}) {
     deactivateAll: () => set(s => ({ allPaused: !s.allPaused, pausedIds: {} })),
     deactivateLabel: S.allPaused ? 'All deactivated' : 'Deactivate all',
     deleteArmed: S.deleteText.trim().toUpperCase() === 'DELETE',
-    doDelete: () => set({ stage: 'signup', deleteText: '', screen: 'strategies' }),
+    doDelete: () => {
+      clearSession()
+      set({ stage: 'signup', deleteText: '', screen: 'strategies' })
+    },
 
     /* builder */
     // Naming is metadata, so it deliberately does not invalidate the backtest.

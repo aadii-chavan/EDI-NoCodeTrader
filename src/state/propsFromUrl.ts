@@ -1,11 +1,13 @@
 import type { AppProps, Stage } from './types'
 
-const STAGES: Stage[] = ['app', 'signup', 'login', 'broker']
+const STAGES: Stage[] = ['landing', 'app', 'signup', 'login', 'broker']
 
 /**
  * The design mockup exposed these as editor props. There is no equivalent panel
  * here, so read them from the query string instead — e.g.
- * `?stage=signup`, `?empty=1`, `?offline=1`, `?ghost=0`, `?pills=0`.
+ * `?stage=landing`, `?stage=signup`, `?empty=1`, `?offline=1`, `?ghost=0`, `?pills=0`.
+ * `?stage=` also overrides the saved session, which is how you get back to the
+ * landing page once signed in.
  */
 export function propsFromUrl(search = window.location.search): Partial<AppProps> {
   const q = new URLSearchParams(search)

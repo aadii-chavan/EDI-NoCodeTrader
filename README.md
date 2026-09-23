@@ -15,10 +15,22 @@ npm run build    # typecheck + production build
 npm run lint
 ```
 
+## Entry point
+
+A logged-out visitor lands on the marketing page (`src/screens/Landing.tsx`);
+signing in or registering drops them into the app on the Strategies overview,
+and a saved session means a refresh skips the landing page entirely.
+
+There is no router in this project — screens are selected by the `stage` /
+`screen` state machine in `src/state/useApp.ts`, and the landing page is a new
+`stage`, not a second routing system. Session persistence is `localStorage`
+via `src/lib/session.ts`; it is demo-only and is not authentication.
+
 ## Screens
 
 | Screen | Component |
 | --- | --- |
+| Landing (marketing) | `src/screens/Landing.tsx` |
 | Strategies overview | `src/screens/Strategies.tsx` |
 | Strategy Builder | `src/screens/Builder.tsx` |
 | Live Monitor | `src/screens/Monitor.tsx` — tabbed, one tab per running strategy |
@@ -34,7 +46,7 @@ query string instead (see `src/state/propsFromUrl.ts`):
 
 | Param | Effect |
 | --- | --- |
-| `?stage=signup` \| `login` \| `broker` \| `app` | Open on that flow (default `app`) |
+| `?stage=landing` \| `signup` \| `login` \| `broker` \| `app` | Open on that flow. Overrides the saved session — this is how you get back to the landing page once signed in. |
 | `?empty=1` | Zero-data variants of Strategies / Monitor / Audit |
 | `?offline=1` | Start with the broker session down |
 | `?ghost=0` | Hide the oversized ghost numerals behind stat tiles |

@@ -1,6 +1,6 @@
 import type { SentencePart } from '../data/mock'
 
-export type Stage = 'app' | 'signup' | 'login' | 'broker'
+export type Stage = 'landing' | 'app' | 'signup' | 'login' | 'broker'
 export type Screen = 'strategies' | 'builder' | 'monitor' | 'audit' | 'settings'
 export type Sizing = 'auto' | 'fixed'
 export type Density = 'list' | 'grid'
@@ -14,7 +14,10 @@ export type Cond = {
 }
 
 export type AppProps = {
-  /** Which flow the app opens on. */
+  /**
+   * Which flow the app opens on. Left unset, a returning visitor with a saved
+   * session opens the app and everyone else gets the landing page.
+   */
   startStage: Stage
   /** Render the zero-data variants of Strategies / Monitor / Audit. */
   emptyState: boolean
